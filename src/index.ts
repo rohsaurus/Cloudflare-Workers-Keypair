@@ -10,10 +10,11 @@ console.log("Hello, does this work?");
 // Define type alias; available via `realm-web`
 type Document = globalThis.Realm.Services.MongoDB.Document;
 
-// Declare the interface for a "todos" document
-interface userid extends Document {
+// Declare the interface for a "keypairs" document
+interface keypairs extends Document {
     _id: string,
-    password: string
+    publicKey: string,
+    privateKey: string,
 }
 
 let App: Realm.App;
@@ -28,10 +29,10 @@ const worker: ExportedHandler<Bindings> = {
 
         const method = req.method;
         const path = url.pathname.replace(/[/]$/, '');
-        const userID = url.searchParams.get('_id') || '';
+        const keypairs = url.searchParams.get('_id') || '';
 
-        if (path !== '/api/userid') {
-            return utils.toError(`Unknown "${path}" URL; try "/api/userid" instead.`, 404);
+        if (path !== '/api/keypairs') {
+            return utils.toError(`Unknown "${path}" URL; try "/api/keypairs" instead.`, 404);
         }
 
         const token = req.headers.get('authorization');
@@ -46,33 +47,25 @@ const worker: ExportedHandler<Bindings> = {
             return utils.toError('Error with authentication.', 500);
         }
 
-        // Grab a reference to the "MainDB userid" collection
-        const collection = client.db('MainDB').collection<userid>('userid');
+        // Grab a reference to the "MainDB keypairs" collection
+        const collection = client.db('MainDB').collection<keypairs>('keypairs');
 
         try {
             if (method === 'GET') {
                 // read the userid from the http request
                 const _id = await req.clone().json();
-                    // GET /api/todos?id=XXX
-                    // find the document that matches the given id
-                    const doc = await collection.findOne({ _id});
-                    // return the document as JSON
-                    return utils.toJSON(doc);
-                    ;}
+                // GET /api/todos?id=XXX
+                // find the document that matches the given id
+                const doc = await collection.findOne({ _id });
+                // return the document as JSON
+                return utils.toJSON(doc);
+                ;
+            }
 
             // POST /api/todos
-            if (method === 'POST') {
-               // let {email} = (await req.clone().json())["_id"];
-                //console.log(email);
-                //let {password} = (await req.clone().json())["password"];
-                //console.log(password);
-                const { _id, password } = await req.clone().json();
+            if (method === 'POST') {          
                 return utils.reply(
-                    await collection.insertOne({
-                        // for some reason id is posting as null, so hardcoding something
-                        "_id": _id,
-                        "password": password
-                    })
+                    await collection.insertOne(await req.clone().json())
                 );
             }
 
@@ -80,7 +73,7 @@ const worker: ExportedHandler<Bindings> = {
             if (method === 'PATCH') {
                 return utils.reply(
                     await collection.updateOne({
-                        _id: new ObjectId(userID)
+                        _id: new ObjectId(keypairs)
                     }, {
                         $set: {
                             done: url.searchParams.get('done') === 'true'
@@ -93,7 +86,7 @@ const worker: ExportedHandler<Bindings> = {
             if (method === 'DELETE') {
                 return utils.reply(
                     await collection.deleteOne({
-                        _id: new ObjectId(userID)
+                        _id: new ObjectId(keypairs)
                     })
                 );
             }

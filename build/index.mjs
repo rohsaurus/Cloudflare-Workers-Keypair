@@ -7613,9 +7613,9 @@ var worker = {
     App2 = App2 || new App(env.REALM_APPID);
     const method = req.method;
     const path = url.pathname.replace(/[/]$/, "");
-    const userID = url.searchParams.get("_id") || "";
-    if (path !== "/api/userid") {
-      return toError(`Unknown "${path}" URL; try "/api/userid" instead.`, 404);
+    const keypairs = url.searchParams.get("_id") || "";
+    if (path !== "/api/keypairs") {
+      return toError(`Unknown "${path}" URL; try "/api/keypairs" instead.`, 404);
     }
     const token = req.headers.get("authorization");
     if (!token)
@@ -7627,7 +7627,7 @@ var worker = {
     } catch (err) {
       return toError("Error with authentication.", 500);
     }
-    const collection = client.db("MainDB").collection("userid");
+    const collection = client.db("MainDB").collection("keypairs");
     try {
       if (method === "GET") {
         const _id = await req.clone().json();
@@ -7636,15 +7636,11 @@ var worker = {
         ;
       }
       if (method === "POST") {
-        const { _id, password } = await req.clone().json();
-        return reply(await collection.insertOne({
-          "_id": _id,
-          "password": password
-        }));
+        return reply(await collection.insertOne(await req.clone().json()));
       }
       if (method === "PATCH") {
         return reply(await collection.updateOne({
-          _id: new ObjectId2(userID)
+          _id: new ObjectId2(keypairs)
         }, {
           $set: {
             done: url.searchParams.get("done") === "true"
@@ -7653,7 +7649,7 @@ var worker = {
       }
       if (method === "DELETE") {
         return reply(await collection.deleteOne({
-          _id: new ObjectId2(userID)
+          _id: new ObjectId2(keypairs)
         }));
       }
       return toError("Method not allowed.", 405);
