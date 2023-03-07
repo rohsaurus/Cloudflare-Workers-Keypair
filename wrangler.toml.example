@@ -1,0 +1,14 @@
+name = "NAME OF YOUR WORKER"
+account_id = "ENTER ACCOUNT ID"
+workers_dev = true # or zone_id = "<ZONE ID>" if you have one
+
+# Opt into backwards-incompatible chnages through 23 May 2022
+compatibility_date = "2022-05-23"
+
+main = "build/index.mjs"
+
+[build]
+command = "npm run build"
+
+[vars]
+REALM_APPID = "ENTER YOUR REALM_APPID"
