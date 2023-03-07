@@ -1,0 +1,34 @@
+name: Keypair Worker Deployment
+on: 
+  push: 
+    branches:
+      - master
+jobs: 
+  linux: 
+    runs-on: ubuntu-latest
+    
+    
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3.6.0
+      - name: Installing Dependencies
+        run: npm install && npm install worktop --save
+        shell: bash
+      - name: Creating Config File
+        run: |
+          echo 'name = "${{ secrets.NAME }}"' > wrangler.toml
+          echo 'account_id = "${{ secrets.ACCOUNT_ID }}"' >> wrangler.toml
+          echo workers_dev = true >> wrangler.toml
+          echo 'compatibility_date = "2022-05-23"' >> wrangler.toml
+          echo 'main = "build/index.mjs"' >> wrangler.toml
+          echo "[build]" >> wrangler.toml
+          echo 'command = "npm run build"' >> wrangler.toml
+          echo "[vars]" >> wrangler.toml
+          echo 'REALM_APPID = "${{ secrets.REALM_APPID }}"' >> wrangler.toml
+        shell: bash
+      - name: publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with: 
+          apitoken: ${{ secrets.CLOUDFLARE_API_KEY }}
+          accountId: ${{ secrets.ACCOUNT_ID }}
+        
